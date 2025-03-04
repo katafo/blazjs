@@ -1,0 +1,15 @@
+{
+  "name": "@blazjs/cache",
+  "version": "0.0.1",
+  "description": "Blazjs - a minimal boilerplate for building express server (@cache)",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "test": "node ./__tests__/cache.test.js"
+  },
+  "dependencies": {
+    "@blazjs/common": "^0.0.1",
+    "ioredis": "^5.5.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@blazjs/core",
+  "version": "0.0.1",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npx lerna run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Blazjs - a minimal boilerplate for building express server",
+  "dependencies": {
+    "lerna": "^8.2.0"
+  }
+}
