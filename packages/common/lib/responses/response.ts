@@ -2,7 +2,7 @@ import { Request } from "express";
 import { ErrorResp } from "./error.response";
 
 export class ResponseWrapper {
-  data: any;
+  data?: any;
   error?: ErrorResp;
   pagination?: Pagination;
 

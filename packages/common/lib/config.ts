@@ -1,7 +1,8 @@
+import { plainToInstance } from "class-transformer";
 import { validateSync } from "class-validator";
 import { logger } from "./logger";
 
-export abstract class Config {
+export class Config {
   nodeEnv: string;
   appEnv?: string;
   port: number;
@@ -35,15 +36,19 @@ export abstract class Config {
    * @returns object
    */
   decodeObj(str: string | undefined) {
-    if (!str) return new Error("env validation error");
+    if (!str) return new Error("Env validation error");
     return JSON.parse(str.replace(/\\/g, ""));
   }
 
-  static validate(config: object) {
-    const errors = validateSync(config);
+  validate() {
+    const errors = validateSync(
+      plainToInstance(Object.getPrototypeOf(this).constructor, this, {
+        enableImplicitConversion: true,
+      })
+    );
     if (!errors.length) return;
     const props = errors.map((e) => e.property);
-    logger.error("env validation error:", { props });
+    logger.error("Env validation error:", { props });
     process.exit(1);
   }
 }

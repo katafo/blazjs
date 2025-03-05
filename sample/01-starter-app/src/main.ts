@@ -1,6 +1,5 @@
-import { App, Config } from "@blazjs/common";
+import { App } from "@blazjs/common";
 import { TypeOrmDataSource } from "@blazjs/datasource";
-import { plainToInstance } from "class-transformer";
 import Container from "typedi";
 import { AppConfig } from "./configs";
 import { INJECT_SQL } from "./datasource";
@@ -18,7 +17,7 @@ const app = new App(config, [
 
 app.start(async () => {
   // validate the configuration
-  Config.validate(plainToInstance(AppConfig, config));
+  config.validate();
 
   // initialize the data source
   await Container.get<TypeOrmDataSource>(INJECT_SQL).initialize();

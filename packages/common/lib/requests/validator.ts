@@ -1,37 +1,32 @@
+import { ClassConstructor, plainToInstance } from "class-transformer";
 import { ValidationError, validateOrReject } from "class-validator";
-import { NextFunction, Response } from "express";
+import { Request } from "express";
 import { ErrorResp } from "../responses";
-import { DataRequest } from "./data-request";
 import { DataRequestDTO } from "./data-request.dto";
 
 /**
  * Validate and bind data from express request.
- * @param cls
  */
-export const validateRequest = <T extends DataRequestDTO>(
-  transform: (data: any) => T
-) => {
-  return async (req: DataRequest<T>, res: Response, next: NextFunction) => {
-    try {
-      const data = {
+export const validateRequest = async <T extends DataRequestDTO>(
+  cls: ClassConstructor<T>,
+  req: Request
+): Promise<T> => {
+  try {
+    const data = plainToInstance(
+      cls,
+      {
         ...req.params,
         ...req.query,
         ...req.body,
-      };
-
-      // transform data to target instance
-      req.data = transform(data);
-
-      // binding data from req
-      req.data.bind(req);
-
-      // validate instance
-      await validateOrReject(req.data);
-      next();
-    } catch (err) {
-      next(parseValidationError(err));
-    }
-  };
+      },
+      { enableImplicitConversion: true }
+    );
+    data.bind(req);
+    await validateOrReject(data);
+    return data;
+  } catch (error) {
+    throw parseValidationError(error);
+  }
 };
 
 const parseValidationError = (err: unknown) => {
