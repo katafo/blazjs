@@ -12,15 +12,12 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "cors": "^2.8.5",
     "express": "^4.21.2",
-    "helmet": "^8.0.0",
     "reflect-metadata": "^0.2.2",
     "typedi": "^0.10.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.8"
   }

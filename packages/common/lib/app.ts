@@ -1,50 +1,51 @@
-import cors from "cors";
 import express, {
   NextFunction,
   Request,
   RequestHandler,
   Response,
-  json,
-  urlencoded,
 } from "express";
-import helmet from "helmet";
-import { Config } from "./config";
 import { errorHandler } from "./error-handler";
 import { logger } from "./logger";
 import { AppRoute } from "./routes/app.route";
 
-export const DEFAULT_MIDDLEWARES = [
-  cors(),
-  helmet(),
-  json(),
-  urlencoded({ extended: true }),
-];
+export interface AppOptions {
+  trustProxy?: boolean;
+}
 
 export class App {
-  config: Config;
-  routes: AppRoute[];
-  app: express.Express;
+  private routes: AppRoute[] = [];
+  private app: express.Express;
+  private middlewares: RequestHandler[] = [];
 
-  constructor(
-    config: Config,
-    routes: AppRoute[],
-    middlewares: express.RequestHandler[] = DEFAULT_MIDDLEWARES
-  ) {
+  constructor(options?: AppOptions) {
     this.app = express();
-    this.config = config;
-    this.routes = routes;
-    this.setupMiddlewares(...middlewares);
-    this.setupRoutes();
+    if (options?.trustProxy) {
+      this.app.set("trust proxy", true);
+    }
   }
 
   /**
    * Sets up the middlewares for the Express application.
    * @param handlers - The middleware handlers to be used.
    */
-  private setupMiddlewares(...handlers: RequestHandler[]) {
-    // trust proxy to get client ip
-    this.app.set("trust proxy", true);
-    this.app.use(handlers);
+  use(...handlers: RequestHandler[]) {
+    this.middlewares.push(...handlers);
+  }
+
+  private setupMiddlewares() {
+    this.app.use(...this.middlewares);
+  }
+
+  set(key: string, value: any) {
+    this.app.set(key, value);
+  }
+
+  /**
+   * Adds the provided routes to the application.
+   * @param routes
+   */
+  registerRoutes(...routes: AppRoute[]) {
+    this.routes.push(...routes);
   }
 
   /**
@@ -57,7 +58,6 @@ export class App {
       if (route.version) {
         path += route.version + "/";
       }
-
       // init group routes
       route.groups?.forEach((group) => {
         group.routes.forEach((clsRoute) => {
@@ -72,8 +72,12 @@ export class App {
         this.app.use(routePath, clsRoute.router);
       });
     });
+  }
 
-    // error handler
+  /**
+   * Sets up the error handlers for the Express application.
+   */
+  private setupErrorHandlers() {
     this.app.use(
       (err: Error, req: Request, res: Response, next: NextFunction) => {
         errorHandler(err, res);
@@ -85,17 +89,21 @@ export class App {
    * Starts the Express application by listening on the provided port.
    * @param initialize - An optional function to be executed before starting the server.
    */
-  async start(initialize?: () => Promise<void>) {
+  async listen(port: number, initialize?: () => Promise<void>) {
     const startTime = Date.now();
 
     if (initialize) {
       await initialize();
     }
 
+    this.setupMiddlewares();
+    this.setupRoutes();
+    this.setupErrorHandlers();
+
     // start server
-    this.app.listen(this.config.port, () => {
+    this.app.listen(port, () => {
       return logger.info(
-        `Server is listening at port ${this.config.port} - Elapsed time: ${
+        `Server is listening at port ${port} - Elapsed time: ${
           (Date.now() - startTime) / 1000
         }s`
       );

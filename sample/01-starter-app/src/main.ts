@@ -1,24 +1,18 @@
 import { App } from "@blazjs/common";
 import { TypeOrmDataSource } from "@blazjs/datasource";
+import { json, urlencoded } from "express";
 import Container from "typedi";
 import { AppConfig } from "./configs";
 import { INJECT_SQL } from "./datasource";
-import { UserRoute } from "./modules/users/user.route";
+import { RoutesVer1 } from "./routes.v1";
 
-const config = Container.get(AppConfig);
-const routes = [UserRoute];
+const app = new App();
+app.use(json(), urlencoded({ extended: true }));
+app.registerRoutes(RoutesVer1);
 
-const app = new App(config, [
-  {
-    version: "v1",
-    routes: routes.map((route) => Container.get(route)),
-  },
-]);
-
-app.start(async () => {
+app.listen(3000, async () => {
   // validate the configuration
-  config.validate();
-
+  Container.get(AppConfig).validate();
   // initialize the data source
   await Container.get<TypeOrmDataSource>(INJECT_SQL).initialize();
 });
