@@ -1,6 +1,6 @@
 {
   "name": "@blazjs/cache",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.0",
   "description": "Blazjs - a minimal boilerplate for building express server (@cache)",
   "license": "ISC",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "test": "node ./__tests__/cache.test.js"
   },
   "dependencies": {
-    "@blazjs/common": "^0.0.1",
+    "@blazjs/common": "^0.0.1-alpha.0",
     "ioredis": "^5.5.0"
   }
 }
