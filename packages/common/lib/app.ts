@@ -33,7 +33,9 @@ export class App {
   }
 
   private setupMiddlewares() {
-    this.app.use(...this.middlewares);
+    if (this.middlewares.length) {
+      this.app.use(...this.middlewares);
+    }
   }
 
   set(key: string, value: any) {
