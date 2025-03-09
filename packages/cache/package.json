@@ -16,6 +16,11 @@
     "build": "rimraf ./dist && tsc",
     "test": "node ./__tests__/cache.test.js"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "dependencies": {
     "@blazjs/common": "^0.0.1-alpha.2",
     "ioredis": "^5.5.0"

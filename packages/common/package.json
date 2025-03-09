@@ -16,6 +16,11 @@
     "build": "rimraf ./dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "license": "MIT",
   "dependencies": {
     "class-transformer": "^0.5.1",

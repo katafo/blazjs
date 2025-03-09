@@ -16,9 +16,13 @@
     "build": "rimraf ./dist && tsc",
     "test": "node ./__tests__/cache.test.js"
   },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "dependencies": {
     "@blazjs/common": "^0.0.1-alpha.2",
-    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.20"
   },
   "gitHead": "3b9bf57236c597488ca526a2893724b4dc04eb76"
