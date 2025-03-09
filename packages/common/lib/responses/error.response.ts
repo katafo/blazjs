@@ -1,7 +1,7 @@
 export class ErrorResp extends Error {
-  readonly status: number;
-  readonly code: string;
-  readonly message: string;
+  status: number;
+  code: string;
+  message: string;
 
   constructor(code: string, message: string, status?: number) {
     super();

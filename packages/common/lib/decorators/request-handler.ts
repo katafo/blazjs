@@ -5,15 +5,10 @@ import { ResponseWrapper } from "../responses";
 
 /**
  * A decorator to handle request validation and response wrapping for express controller.
- * @param cls
+ * @param cls: Request data class constructor
  * @returns
  */
-export function RequestHandler<T extends DataRequestDTO>(
-  cls?: ClassConstructor<T>,
-  options?: {
-    validateNested?: () => T;
-  }
-) {
+export function Request<T extends DataRequestDTO>(cls?: ClassConstructor<T>) {
   return function (
     target: any,
     propertyKey: string,

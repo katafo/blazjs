@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 export class Config {
   nodeEnv: string;
-  appEnv?: string;
+  appEnv: string;
   port: number;
 
   constructor() {

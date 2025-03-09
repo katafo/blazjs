@@ -1,4 +1,4 @@
-import { RequestHandler } from "@blazjs/common";
+import { Request } from "@blazjs/common";
 import { Service } from "typedi";
 import { UserCreateReqDTO } from "./dtos/user-create.dto";
 import { UserService } from "./user.service";
@@ -7,13 +7,13 @@ import { UserService } from "./user.service";
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @RequestHandler(UserCreateReqDTO)
+  @Request(UserCreateReqDTO)
   async createUser(data: UserCreateReqDTO) {
     const user = await this.userService.createUser(data);
     return user;
   }
 
-  @RequestHandler()
+  @Request()
   async getUsers() {
     return await this.userService.getUsers();
   }
