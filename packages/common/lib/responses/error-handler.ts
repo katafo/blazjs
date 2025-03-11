@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { logger } from "./logger";
-import { ErrorResp, ResponseWrapper } from "./responses";
+import { ErrorResp, ResponseWrapper } from ".";
+import { logger } from "../logger";
 
 export const errorHandler = (err: Error, res: Response) => {
   if (err instanceof ErrorResp) {
@@ -8,9 +8,9 @@ export const errorHandler = (err: Error, res: Response) => {
       .status(err.status || 400)
       .send(new ResponseWrapper(null, undefined, err));
   } else {
-    logger.error(err);
+    logger.error("Error:", err);
     // hide internal server error details in production
-    if (process.env.APP_ENV === "production") {
+    if (process.env.NODE_ENV === "production") {
       res
         .status(500)
         .send(
@@ -28,7 +28,7 @@ export const errorHandler = (err: Error, res: Response) => {
     }
     const errResp = new ErrorResp(
       "error.internalServerError",
-      JSON.stringify(err),
+      err.message,
       500
     );
     res.status(500).send(new ResponseWrapper(null, undefined, errResp));

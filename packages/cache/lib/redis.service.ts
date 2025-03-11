@@ -14,7 +14,7 @@ export class RedisCacheService
     SetCacheProvider,
     SortedSetCacheProvider
 {
-  redisClient: Redis;
+  private redisClient: Redis;
 
   constructor(options: RedisOptions) {
     this.redisClient = new Redis(options);
@@ -157,7 +157,7 @@ export class RedisCacheService
       pagination.limit,
       "WITHSCORES"
     );
-    return chunkArray(res, 2).map(([member, score]) => ({
+    return chunk(res, 2).map(([member, score]) => ({
       member,
       score,
     }));
@@ -247,7 +247,7 @@ export class RedisCacheService
   }
 }
 
-const chunkArray = <T>(array: T[], size: number): T[][] => {
+const chunk = <T>(array: T[], size: number): T[][] => {
   return Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
     array.slice(i * size, i * size + size)
   );

@@ -24,10 +24,18 @@ export class Pagination {
     this.total = total || 0;
   }
 
-  static fromReq = (req: Request): Pagination => {
+  /**
+   * Create pagination object from express request.
+   * If page not a number, return undefined.
+   * If limit not provided, use default value 10.
+   * @param req: Request
+   * @returns
+   */
+  static fromReq = (req: Request): Pagination | undefined => {
     const page = Number(req.query.page);
     const limit = Number(req.query.limit);
-    return new Pagination(isNaN(page) ? 1 : page, isNaN(limit) ? 10 : limit);
+    if (isNaN(page)) return;
+    return new Pagination(page, isNaN(limit) ? 10 : limit);
   };
 
   getOffset = () => {

@@ -4,8 +4,8 @@ import express, {
   RequestHandler,
   Response,
 } from "express";
-import { errorHandler } from "./error-handler";
 import { logger } from "./logger";
+import { errorHandler } from "./responses/error-handler";
 import { AppRoute } from "./routes/app.route";
 
 export interface AppOptions {
