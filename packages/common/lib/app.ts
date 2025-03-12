@@ -1,11 +1,6 @@
-import express, {
-  NextFunction,
-  Request,
-  RequestHandler,
-  Response,
-} from "express";
+import express, { ErrorRequestHandler, RequestHandler } from "express";
 import { logger } from "./logger";
-import { errorHandler } from "./responses/error-handler";
+import { errorRequestHandler } from "./responses";
 import { AppRoute } from "./routes/app.route";
 
 export interface AppOptions {
@@ -16,6 +11,8 @@ export class App {
   private routes: AppRoute[] = [];
   private app: express.Express;
   private middlewares: RequestHandler[] = [];
+  private errorHandler: ErrorRequestHandler;
+  private sanitizedLogKeys: Set<string> = new Set();
 
   constructor(options?: AppOptions) {
     this.app = express();
@@ -24,22 +21,16 @@ export class App {
     }
   }
 
-  /**
-   * Sets up the middlewares for the Express application.
-   * @param handlers - The middleware handlers to be used.
-   */
-  use(...handlers: RequestHandler[]) {
-    this.middlewares.push(...handlers);
-  }
-
-  private setupMiddlewares() {
-    if (this.middlewares.length) {
-      this.app.use(...this.middlewares);
-    }
-  }
-
   set(key: string, value: any) {
     this.app.set(key, value);
+  }
+
+  /**
+   * Sets up the middlewares for the application.
+   * @param handlers - The middleware handlers to be used.
+   */
+  registerMiddlewares(...handlers: RequestHandler[]) {
+    this.middlewares.push(...handlers);
   }
 
   /**
@@ -48,6 +39,12 @@ export class App {
    */
   registerRoutes(...routes: AppRoute[]) {
     this.routes.push(...routes);
+  }
+
+  private setupMiddlewares() {
+    if (this.middlewares.length) {
+      this.app.use(...this.middlewares);
+    }
   }
 
   /**
@@ -77,42 +74,25 @@ export class App {
   }
 
   /**
-   * Sets up the error handlers for the Express application.
+   * Sets up the sensitive keys that should be masked in the logs.
    */
-  private setupErrorHandlers() {
-    this.app.use(
-      (err: Error, req: Request, res: Response, next: NextFunction) => {
-        errorHandler(err, res);
-      }
-    );
+  sanitizeLogs(keys: string[]) {
+    this.sanitizedLogKeys = new Set(keys);
   }
 
   /**
-   * Starts the Express application by listening on the provided port.
-   * @param initialize - An optional function to be executed before starting the server.
+   * Sets up custom error request handler for the application.
+   * @param handler - The error handler to be used.
    */
-  async listen(port: number, initialize?: () => Promise<void>) {
-    const startTime = Date.now();
-
-    if (initialize) {
-      await initialize();
+  setupErrorHandler(handler: ErrorRequestHandler) {
+    if (handler) {
+      this.errorHandler = handler;
     }
+  }
 
-    this.setupMiddlewares();
-    this.setupRoutes();
-    this.setupErrorHandlers();
-
-    // start server
-    this.app.listen(port, () => {
-      return logger.info(
-        `Server is listening at port ${port} - Elapsed time: ${
-          (Date.now() - startTime) / 1000
-        }s`
-      );
-    });
-
+  private setupProcessHandlers() {
     process.on("uncaughtException", (err) => {
-      logger.error(err);
+      logger.error("Uncaught Exception", err);
     });
 
     process.on("unhandledRejection", (reason, promise) => {
@@ -123,5 +103,34 @@ export class App {
         })}`
       );
     });
+  }
+
+  /**
+   * Starts the application by listening on the provided port.
+   */
+  async listen(port: number) {
+    try {
+      this.setupMiddlewares();
+      this.setupRoutes();
+      this.app.use(
+        this.errorHandler ??
+          errorRequestHandler.bind(null, this.sanitizedLogKeys)
+      );
+      this.setupProcessHandlers();
+
+      await new Promise<void>((resolve, reject) => {
+        this.app
+          .listen(port, () => {
+            logger.info(`Server is listening at port ${port}`);
+            resolve();
+          })
+          .on("error", (err) => {
+            reject(err);
+          });
+      });
+    } catch (error) {
+      logger.error("Error starting server", error);
+      process.exit(1);
+    }
   }
 }

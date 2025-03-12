@@ -11,7 +11,7 @@ export class TypeOrmLogger extends AbstractLogger {
   }
 
   logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): void {
-    logger.info(`[QUERY] ${this.generateQuery(query, parameters)}`);
+    logger.debug(`[QUERY] ${this.generateQuery(query, parameters)}`);
   }
 
   logQuerySlow(
@@ -23,15 +23,6 @@ export class TypeOrmLogger extends AbstractLogger {
     logger.warn(
       `[QUERY] [${time}ms] - ${this.generateQuery(query, parameters)}`
     );
-  }
-
-  logQueryError(
-    error: string,
-    query: string,
-    parameters?: any[],
-    queryRunner?: QueryRunner
-  ): void {
-    logger.error(`[QUERY] ${error} - ${this.generateQuery(query, parameters)}`);
   }
 
   private generateQuery(query: string, parameters: any[] | undefined) {

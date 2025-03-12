@@ -9,7 +9,6 @@ export class UserRoute implements BaseRoute {
   router: Router = Router();
 
   constructor(private userController: UserController) {
-    this.userController = userController;
     this.router.post(
       "/",
       this.userController.createUser.bind(this.userController)

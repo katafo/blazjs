@@ -7,7 +7,6 @@ export class ErrorResp extends Error {
     super();
     this.code = code;
     this.message = message;
-    this.stack = undefined;
     this.status = status || 500;
   }
 }
