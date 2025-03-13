@@ -1,7 +1,11 @@
-import { logger } from "@blazjs/common";
+import { DefaultLogger, Logger } from "@blazjs/common";
 import { AbstractLogger, LogLevel, LogMessage, QueryRunner } from "typeorm";
 
 export class TypeOrmLogger extends AbstractLogger {
+  constructor(private logger: Logger = new DefaultLogger()) {
+    super();
+  }
+
   protected writeLog(
     level: LogLevel,
     message: string | number | LogMessage | (string | number | LogMessage)[],
@@ -11,7 +15,7 @@ export class TypeOrmLogger extends AbstractLogger {
   }
 
   logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): void {
-    logger.debug(`[QUERY] ${this.generateQuery(query, parameters)}`);
+    this.logger.debug(`[QUERY] ${this.generateQuery(query, parameters)}`);
   }
 
   logQuerySlow(
@@ -20,7 +24,7 @@ export class TypeOrmLogger extends AbstractLogger {
     parameters?: any[],
     queryRunner?: QueryRunner
   ): void {
-    logger.warn(
+    this.logger.warn(
       `[QUERY] [${time}ms] - ${this.generateQuery(query, parameters)}`
     );
   }

@@ -1,2 +1,2 @@
 export * from "./data-request.dto";
-export * from "./validator";
+export * from "./request-validator";

@@ -1,6 +1,5 @@
 import { plainToInstance } from "class-transformer";
 import { validateSync } from "class-validator";
-import { logger } from "./logger";
 
 export class Config {
   nodeEnv: string;
@@ -48,7 +47,6 @@ export class Config {
     );
     if (!errors.length) return;
     const props = errors.map((e) => e.property);
-    logger.error("Env validation error:", { props });
-    process.exit(1);
+    throw new Error(`Env validation error: ${props.join(", ")}`);
   }
 }

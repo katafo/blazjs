@@ -1,24 +1,40 @@
-import express, { ErrorRequestHandler, RequestHandler } from "express";
-import { logger } from "./logger";
+import cors from "cors";
+import express, {
+  ErrorRequestHandler,
+  json,
+  RequestHandler,
+  urlencoded,
+} from "express";
+import helmet from "helmet";
+import { AppOptions } from "./app.options";
+import { DefaultLogger, Logger } from "./loggers";
 import { errorRequestHandler } from "./responses";
 import { AppRoute } from "./routes/app.route";
-
-export interface AppOptions {
-  trustProxy?: boolean;
-}
 
 export class App {
   private routes: AppRoute[] = [];
   private app: express.Express;
   private middlewares: RequestHandler[] = [];
-  private errorHandler: ErrorRequestHandler;
-  private sanitizedLogKeys: Set<string> = new Set();
+  private _errorRequestHandler: ErrorRequestHandler = errorRequestHandler;
+  private logger: Logger;
+
+  private options: AppOptions = {
+    cors: {
+      enabled: true,
+    },
+    helmet: {
+      enabled: true,
+    },
+    trustProxy: true,
+  };
 
   constructor(options?: AppOptions) {
     this.app = express();
-    if (options?.trustProxy) {
-      this.app.set("trust proxy", true);
+    // override default options
+    if (options) {
+      this.options = { ...this.options, ...options };
     }
+    this.logger = options?.logger ? options.logger : new DefaultLogger();
   }
 
   set(key: string, value: any) {
@@ -74,29 +90,22 @@ export class App {
   }
 
   /**
-   * Sets up the sensitive keys that should be masked in the logs.
-   */
-  sanitizeLogs(keys: string[]) {
-    this.sanitizedLogKeys = new Set(keys);
-  }
-
-  /**
    * Sets up custom error request handler for the application.
    * @param handler - The error handler to be used.
    */
-  setupErrorHandler(handler: ErrorRequestHandler) {
+  registerErrorHandler(handler: ErrorRequestHandler) {
     if (handler) {
-      this.errorHandler = handler;
+      this._errorRequestHandler = handler;
     }
   }
 
   private setupProcessHandlers() {
     process.on("uncaughtException", (err) => {
-      logger.error("Uncaught Exception", err);
+      this.logger.error("Uncaught Exception", err);
     });
 
     process.on("unhandledRejection", (reason, promise) => {
-      logger.error(
+      this.logger.error(
         `Unhandled Rejection at: Promise ${JSON.stringify({
           promise,
           reason,
@@ -110,18 +119,40 @@ export class App {
    */
   async listen(port: number) {
     try {
+      if (this.options.trustProxy) {
+        // enable trust proxy to get the client IP address
+        this.app.set("trust proxy", true);
+      }
+
+      // default middlewares
+      this.app.use(json(), urlencoded({ extended: true }));
+
+      // cors
+      const corsConfig = this.options.cors;
+      if (corsConfig?.enabled) {
+        this.app.use(corsConfig.options ? cors(corsConfig.options) : cors());
+      }
+
+      // helmet
+      const helmetConfig = this.options.helmet;
+      if (helmetConfig?.enabled) {
+        this.app.use(
+          helmetConfig.options ? helmet(helmetConfig.options) : helmet()
+        );
+      }
+
       this.setupMiddlewares();
       this.setupRoutes();
-      this.app.use(
-        this.errorHandler ??
-          errorRequestHandler.bind(null, this.sanitizedLogKeys)
-      );
       this.setupProcessHandlers();
+
+      // handle error request
+      this.app.use(this.logger.errorLogMiddleware.bind(this.logger));
+      this.app.use(this._errorRequestHandler);
 
       await new Promise<void>((resolve, reject) => {
         this.app
           .listen(port, () => {
-            logger.info(`Server is listening at port ${port}`);
+            this.logger.info(`Server is listening at port ${port}`);
             resolve();
           })
           .on("error", (err) => {
@@ -129,7 +160,7 @@ export class App {
           });
       });
     } catch (error) {
-      logger.error("Error starting server", error);
+      this.logger.error("Error starting server", error);
       process.exit(1);
     }
   }

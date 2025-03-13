@@ -1,3 +1,4 @@
+import { Logger } from "@blazjs/common";
 import {
   DataSource,
   DataSourceOptions,
@@ -14,13 +15,13 @@ export type DataSourceMode = ReplicationMode | InferEntityManager;
 export class TypeOrmDataSource {
   source: DataSource;
 
-  constructor(options: DataSourceOptions) {
+  constructor(options: DataSourceOptions, logger?: Logger) {
     this.source = new DataSource(options);
-    this.source.logger = new TypeOrmLogger();
+    this.source.logger = new TypeOrmLogger(logger);
   }
 
   async initialize() {
-    return this.source.initialize();
+    await this.source.initialize();
   }
 
   /**
@@ -62,5 +63,22 @@ export class TypeOrmDataSource {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * Run migration on the database.
+   */
+  async runMigration(options?: {
+    transaction?: "all" | "none" | "each";
+    fake?: boolean;
+  }) {
+    await this.source.runMigrations(options);
+  }
+
+  /**
+   * Close the connection to the database.
+   */
+  async close() {
+    await this.source.destroy();
   }
 }
