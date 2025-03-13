@@ -1,6 +1,6 @@
 {
   "name": "@blazjs/cache",
-  "version": "0.0.1-alpha.2",
+  "version": "0.0.1-alpha.3",
   "description": "Blazjs - a minimal boilerplate for building express server (@cache)",
   "license": "ISC",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@blazjs/common": "^0.0.1-alpha.2",
+    "@blazjs/common": "^0.0.1-alpha.3",
     "ioredis": "^5.5.0"
   },
   "gitHead": "3b9bf57236c597488ca526a2893724b4dc04eb76"
