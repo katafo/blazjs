@@ -1,4 +1,3 @@
-import { ErrorResp } from "@blazjs/common";
 import { TypeOrmDataSource } from "@blazjs/datasource";
 import { Inject, Service } from "typedi";
 import { INJECT_SQL } from "../../datasource";
@@ -13,7 +12,6 @@ export class UserService {
   ) {}
 
   async createUser(data: UserCreateDTO) {
-    throw new ErrorResp("eeee", "Unauthorized", 401);
     // create user with transaction
     return this.datasource.transaction(async (manager) => {
       return this.userRepos.createUser(data, manager);

@@ -65,31 +65,25 @@ export abstract class Logger {
     res: Response,
     next: NextFunction
   ) {
+    const log = {
+      request: this.request(req),
+      error: {
+        name: err.name,
+        code: err["code"],
+        message: err.message,
+        stack: process.env.NODE_ENV !== "production" ? err.stack : undefined,
+      },
+    };
     if (err instanceof ErrorResp) {
       // Log only UNAUTHORIZED, FORBIDEN, TOO_MANY_REQUEST errors
       if ([401, 403, 429].includes(err.status)) {
-        this.warn(err.message, {
-          request: this.request(req),
-          error: {
-            name: err.name,
-            code: err["code"],
-            message: err.message,
-            stack:
-              process.env.NODE_ENV !== "production" ? err.stack : undefined,
-          },
-        });
+        this.warn(err.message, log);
+      } else {
+        this.debug(err.message, log);
       }
     } else {
       // Log all other internal server errors
-      this.error(err.message, {
-        request: this.request(req),
-        error: {
-          name: err.name,
-          code: err["code"],
-          message: err.message,
-          stack: process.env.NODE_ENV !== "production" ? err.stack : undefined,
-        },
-      });
+      this.error(err.message, log);
     }
     next(err);
   }

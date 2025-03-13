@@ -2,12 +2,12 @@ import { ClassConstructor, plainToInstance } from "class-transformer";
 import { ValidationError, validateOrReject } from "class-validator";
 import { Request } from "express";
 import { ErrorResp } from "../responses";
-import { DataRequestDTO } from "./data-request.dto";
+import { BaseRequestDTO } from "./request.dto";
 
 /**
  * Validate and bind data from express request.
  */
-export const validateRequest = async <T extends DataRequestDTO>(
+export const validateRequest = async <T extends BaseRequestDTO>(
   cls: ClassConstructor<T>,
   req: Request
 ): Promise<T> => {
