@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "npx lerna run build",
-    "publish": "npx lerna publish --no-private",
+    "publish": "npx lerna publish --no-private --force-publish",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
