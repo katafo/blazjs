@@ -5,7 +5,7 @@ import { ResponseWrapper } from "../responses";
 
 /**
  * A decorator to handle request validation and response wrapping for express controller.
- * @param cls: Request data class constructor
+ * @param cls: Request data class constructor. Default is DataRequestDTO.
  * @returns
  */
 export function Request<T extends DataRequestDTO>(cls?: ClassConstructor<T>) {

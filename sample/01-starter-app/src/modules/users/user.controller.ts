@@ -1,4 +1,4 @@
-import { Request } from "@blazjs/common";
+import { DataRequestDTO, Request } from "@blazjs/common";
 import { Service } from "typedi";
 import { UserCreateReqDTO } from "./dtos/user-create.dto";
 import { UserService } from "./user.service";
@@ -14,7 +14,7 @@ export class UserController {
   }
 
   @Request()
-  async getUsers() {
-    return await this.userService.getUsers();
+  async getUsers(data: DataRequestDTO) {
+    return await this.userService.getUsers(data);
   }
 }

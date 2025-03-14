@@ -1,12 +1,16 @@
 import { EntityTarget, ObjectLiteral, Repository } from "typeorm";
-import { TypeOrmDataSource } from "./typeorm.datasource";
+import { InferEntityManager, TypeOrmDataSource } from "./typeorm.datasource";
 
-export class TypeOrmRepos<T extends ObjectLiteral> {
-  protected readonly repos: Repository<T>;
+export class TypeOrmRepos<T extends ObjectLiteral> extends Repository<T> {
   protected readonly datasource: TypeOrmDataSource;
 
   constructor(entity: EntityTarget<T>, datasource: TypeOrmDataSource) {
+    const repos = datasource.source.getRepository(entity);
+    super(repos.target, repos.manager);
     this.datasource = datasource;
-    this.repos = datasource.source.getRepository(entity);
+  }
+
+  async transaction<T>(handler: (manager: InferEntityManager) => Promise<T>) {
+    return this.datasource.transaction(handler);
   }
 }
