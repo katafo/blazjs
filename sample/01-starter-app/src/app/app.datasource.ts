@@ -1,6 +1,6 @@
 import { TypeOrmDataSource } from "@blazjs/datasource";
 import { Service } from "typedi";
-import { AppConfig } from "./configs";
+import { AppConfig } from "./app.config";
 
 @Service()
 export class AppDataSource extends TypeOrmDataSource {

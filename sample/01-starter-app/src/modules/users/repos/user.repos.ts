@@ -5,7 +5,7 @@ import {
   TypeOrmRepos,
 } from "@blazjs/datasource";
 import { Service } from "typedi";
-import { AppDataSource } from "../../../datasource";
+import { AppDataSource } from "../../../app/app.datasource";
 import { UserCreateDTO } from "../dtos/user-create.dto";
 import { User } from "../entities/user.entity";
 

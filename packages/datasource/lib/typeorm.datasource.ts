@@ -13,7 +13,7 @@ export type InferEntityManager = EntityManager;
 export type DataSourceMode = ReplicationMode | InferEntityManager;
 
 export class TypeOrmDataSource {
-  source: DataSource;
+  readonly source: DataSource;
 
   constructor(options: DataSourceOptions, logger?: Logger) {
     this.source = new DataSource(options);
