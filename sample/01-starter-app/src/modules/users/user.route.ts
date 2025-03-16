@@ -1,6 +1,6 @@
 import { BaseRoute } from "@blazjs/common";
 import { Service } from "typedi";
-import { AppAuth } from "../auths/auth";
+import { AppAuth } from "../auth/auth";
 import { UserController } from "./user.controller";
 
 @Service()
@@ -9,9 +9,6 @@ export class UserRoute extends BaseRoute {
 
   constructor(private controller: UserController, private auth: AppAuth) {
     super();
-  }
-
-  registerRoutes(): void {
     this.router.post("/sign-in", this.controller.signIn.bind(this.controller));
 
     // require authorization

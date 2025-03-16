@@ -1,6 +1,6 @@
 import { DataRequestDTO } from "@blazjs/common";
 import { Service } from "typedi";
-import { AppAuth } from "../auths/auth";
+import { AppAuth } from "../auth/auth";
 import { UserCreateDTO } from "./dtos/user-create.dto";
 import { UserSignInDTO } from "./dtos/user-signin.dto";
 import { UserRepos } from "./repos/user.repos";
