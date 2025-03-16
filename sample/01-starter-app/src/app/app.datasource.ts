@@ -16,7 +16,7 @@ export class AppDataSource extends TypeOrmDataSource {
       port: db.port,
       poolSize: 10,
       maxQueryExecutionTime: 1000,
-      synchronize: false,
+      synchronize: true, // DO NOT USE IN PRODUCTION
     });
   }
 }

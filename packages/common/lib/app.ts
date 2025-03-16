@@ -1,15 +1,40 @@
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 import express, {
   ErrorRequestHandler,
   json,
   RequestHandler,
   urlencoded,
 } from "express";
-import helmet from "helmet";
-import { AppOptions } from "./app.options";
+import helmet, { HelmetOptions } from "helmet";
 import { DefaultLogger, Logger } from "./loggers";
 import { errorRequestHandler } from "./responses";
 import { AppRoute } from "./routes/app.route";
+
+export interface AppOptions {
+  /** Enable trust proxy to get the client IP address.
+   * @default true
+   */
+  trustProxy?: boolean;
+
+  /** Config CORS.
+   * @default true
+   */
+  cors?: {
+    enabled: boolean;
+    options?: CorsOptions;
+  };
+
+  /** Config Helmet.
+   * @default true
+   */
+  helmet?: {
+    enabled: boolean;
+    options?: HelmetOptions;
+  };
+
+  /** Logger */
+  logger?: Logger;
+}
 
 export class App {
   private routes: AppRoute[] = [];

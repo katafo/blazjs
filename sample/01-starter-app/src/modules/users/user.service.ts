@@ -1,16 +1,26 @@
 import { DataRequestDTO } from "@blazjs/common";
 import { Service } from "typedi";
+import { AppAuth } from "../auths/auth";
 import { UserCreateDTO } from "./dtos/user-create.dto";
+import { UserSignInDTO } from "./dtos/user-signin.dto";
 import { UserRepos } from "./repos/user.repos";
-
-export interface IUserService {
-  createUser(data: UserCreateDTO): Promise<any>;
-  getUsers(data: DataRequestDTO): Promise<any>;
-}
+import { UserError } from "./user.error";
 
 @Service()
-export class UserService implements IUserService {
-  constructor(private repos: UserRepos) {}
+export class UserService {
+  constructor(private repos: UserRepos, private auth: AppAuth) {}
+
+  async signIn(data: UserSignInDTO) {
+    const { email, password } = data;
+    if (email === "demo@blazjs.com" && password === "demo") {
+      const token = await this.auth.sign({
+        userId: "1",
+        sub: "1",
+      });
+      return token;
+    }
+    throw UserError.InvalidAccount;
+  }
 
   async createUser(data: UserCreateDTO) {
     return this.repos.transaction(async (manager) => {

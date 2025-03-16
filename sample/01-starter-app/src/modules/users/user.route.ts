@@ -1,22 +1,22 @@
 import { BaseRoute } from "@blazjs/common";
-import { Router } from "express";
 import { Service } from "typedi";
+import { AppAuth } from "../auths/auth";
 import { UserController } from "./user.controller";
 
 @Service()
-export class UserRoute implements BaseRoute {
+export class UserRoute extends BaseRoute {
   route? = "users";
-  router: Router = Router();
 
-  constructor(private userController: UserController) {
-    this.router.post(
-      "/",
-      this.userController.createUser.bind(this.userController)
-    );
+  constructor(private controller: UserController, private auth: AppAuth) {
+    super();
+  }
 
-    this.router.get(
-      "/",
-      this.userController.getUsers.bind(this.userController)
-    );
+  registerRoutes(): void {
+    this.router.post("/sign-in", this.controller.signIn.bind(this.controller));
+
+    // require authorization
+    this.router.use(this.auth.authorize.bind(this.auth));
+    this.router.post("/", this.controller.createUser.bind(this.controller));
+    this.router.get("/", this.controller.getUsers.bind(this.controller));
   }
 }

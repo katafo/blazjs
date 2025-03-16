@@ -1,0 +1,32 @@
+{
+  "name": "@blazjs/auth",
+  "version": "0.0.1-alpha.3",
+  "description": "Blazjs - a minimal boilerplate for building express server (@auth)",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/katafo/blazjs.git",
+    "directory": "packages/auth"
+  },
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "test": "node ./__tests__/cache.test.js"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@blazjs/cache": "^0.0.1-alpha.3",
+    "@blazjs/common": "^0.0.1-alpha.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9"
+  }
+}
