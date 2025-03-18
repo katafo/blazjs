@@ -28,5 +28,6 @@
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.9"
-  }
+  },
+  "gitHead": "6fb726f7868407c29856e70d7ec04532f3a899d2"
 }

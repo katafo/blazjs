@@ -1,6 +1,6 @@
 import { BaseRoute } from "@blazjs/common";
+import { AppAuth } from "@modules/auth/auth";
 import { Service } from "typedi";
-import { AppAuth } from "../auth/auth";
 import { UserController } from "./user.controller";
 
 @Service()

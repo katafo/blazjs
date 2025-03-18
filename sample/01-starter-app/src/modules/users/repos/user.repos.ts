@@ -1,3 +1,4 @@
+import { AppDataSource } from "@app/app.datasource";
 import { DataRequestDTO } from "@blazjs/common";
 import {
   DataSourceMode,
@@ -5,7 +6,6 @@ import {
   TypeOrmRepos,
 } from "@blazjs/datasource";
 import { Service } from "typedi";
-import { AppDataSource } from "../../../app/app.datasource";
 import { UserCreateDTO } from "../dtos/user-create.dto";
 import { User } from "../entities/user.entity";
 

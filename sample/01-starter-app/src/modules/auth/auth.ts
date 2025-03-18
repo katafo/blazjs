@@ -1,7 +1,7 @@
+import { AppConfig } from "@app/index";
 import { JwtAuth, JwtAuthPayload } from "@blazjs/auth";
 import { NextFunction, Request, Response } from "express";
 import { Service } from "typedi";
-import { AppConfig } from "../../app";
 import { AuthError } from "./auth.error";
 
 export class AuthPayload implements JwtAuthPayload {
