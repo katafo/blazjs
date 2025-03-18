@@ -1,6 +1,6 @@
 {
   "name": "@blazjs/datasource",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "description": "Blazjs - a minimal boilerplate for building express server (@datasource)",
   "license": "ISC",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@blazjs/common": "^0.0.1-alpha.3",
+    "@blazjs/common": "^0.0.1-alpha.4",
     "typeorm": "^0.3.21"
   },
   "gitHead": "3b9bf57236c597488ca526a2893724b4dc04eb76"

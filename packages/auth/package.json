@@ -1,6 +1,6 @@
 {
   "name": "@blazjs/auth",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "description": "Blazjs - a minimal boilerplate for building express server (@auth)",
   "license": "ISC",
   "main": "dist/index.js",
@@ -22,8 +22,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@blazjs/cache": "^0.0.1-alpha.3",
-    "@blazjs/common": "^0.0.1-alpha.3",
+    "@blazjs/cache": "^0.0.1-alpha.4",
+    "@blazjs/common": "^0.0.1-alpha.4",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
