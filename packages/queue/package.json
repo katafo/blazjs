@@ -1,0 +1,29 @@
+{
+  "name": "@blazjs/queue",
+  "version": "0.0.1-alpha.4",
+  "description": "Blazjs - a minimal boilerplate for building express server (@queue)",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/katafo/blazjs.git",
+    "directory": "packages/queue"
+  },
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "test": "node ./__tests__/cache.test.js"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@blazjs/cache": "^0.0.1-alpha.4",
+    "@blazjs/common": "^0.0.1-alpha.4",
+    "bullmq": "^5.43.1"
+  }
+}
