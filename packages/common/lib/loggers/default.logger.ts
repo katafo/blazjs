@@ -43,8 +43,15 @@ export class DefaultLogger extends Logger {
               return info;
             })(),
             colorize(),
-            printf(({ timestamp, level, message }) => {
-              return `${level} ${message} [${timestamp}]`;
+            printf((data) => {
+              const { level, message, timestamp } = data;
+              const meta = {
+                ...data,
+                level: undefined,
+                message: undefined,
+                timestamp,
+              };
+              return `${level} ${message} ${JSON.stringify(meta)}`;
             })
           ),
         }),

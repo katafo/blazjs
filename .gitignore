@@ -27,3 +27,4 @@ packages/**/*.js
 
 .npmrc
 .env
+/.github/prompts/*

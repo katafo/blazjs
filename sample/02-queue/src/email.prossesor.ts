@@ -1,33 +1,23 @@
 import { AppConfig } from "@app/app.config";
 import { logger } from "@app/app.logger";
 import { BulkJob, JobProcessor } from "@blazjs/queue";
-import { Job, Queue } from "bullmq";
-import Redis from "ioredis";
+import { Job } from "bullmq";
 import { Service } from "typedi";
 
 @Service()
 export class EmailJobProcessor extends JobProcessor {
   constructor(config: AppConfig) {
-    super(
-      new Queue("email", {
-        connection: new Redis(config.redis),
-        defaultJobOptions: {
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      }),
-      {
-        connection: new Redis({
-          ...config.redis,
-          maxRetriesPerRequest: null,
-        }),
-        concurrency: 1,
-      }
-    );
+    super({
+      connection: config.redis,
+      queue: {
+        name: "email",
+      },
+      logger,
+    });
   }
 
   async process(job: Job): Promise<BulkJob[]> {
-    logger.debug(`Sent welcome mail to: ${job.data.to}`);
+    logger.debug(`Sent welcome mail`, job.data);
     return [
       {
         name: "discount-offer",

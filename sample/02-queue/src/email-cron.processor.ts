@@ -1,29 +1,19 @@
 import { AppConfig } from "@app/app.config";
 import { logger } from "@app/app.logger";
 import { BulkJob, CronJobProcessor } from "@blazjs/queue";
-import { Job, Queue } from "bullmq";
-import Redis from "ioredis";
+import { Job } from "bullmq";
 import { Service } from "typedi";
 
 @Service()
 export class EmailCronJobProcessor extends CronJobProcessor {
   constructor(config: AppConfig) {
-    super(
-      new Queue("cron-welcome-mail", {
-        connection: new Redis(config.redis),
-        defaultJobOptions: {
-          removeOnComplete: true,
-          removeOnFail: true,
-        },
-      }),
-      {
-        connection: new Redis({
-          ...config.redis,
-          maxRetriesPerRequest: null,
-        }),
-        concurrency: 1,
-      }
-    );
+    super({
+      connection: config.redis,
+      queue: {
+        name: "cron-welcome-mail",
+      },
+      logger,
+    });
   }
 
   async process(job: Job): Promise<BulkJob[]> {
