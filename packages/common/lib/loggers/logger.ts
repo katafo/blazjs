@@ -16,7 +16,7 @@ export abstract class Logger {
     if (typeof data === "object" && data !== null) {
       return JSON.parse(
         JSON.stringify(data, (key, value) =>
-          keys.has(key) ? "**********" : value
+          keys.has(key) ? "<REDACTED>" : value
         )
       );
     }
