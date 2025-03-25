@@ -1,5 +1,5 @@
+import { AppAuth } from "@app/auth/auth";
 import { DataRequestDTO } from "@blazjs/common";
-import { AppAuth } from "@modules/auth/auth";
 import { Service } from "typedi";
 import { UserCreateDTO } from "./dtos/user-create.dto";
 import { UserSignInDTO } from "./dtos/user-signin.dto";
