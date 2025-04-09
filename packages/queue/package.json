@@ -1,6 +1,6 @@
 {
   "name": "@blazjs/queue",
-  "version": "0.0.1-alpha.5",
+  "version": "0.0.1-alpha.6",
   "description": "Blazjs - a minimal boilerplate for building express server (@queue)",
   "license": "ISC",
   "main": "dist/index.js",
@@ -22,7 +22,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@blazjs/common": "^0.0.1-alpha.5",
+    "@blazjs/common": "^0.0.1-alpha.6",
     "bullmq": "^5.43.1",
     "ioredis": "^5.6.0"
   }
