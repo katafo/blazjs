@@ -29,7 +29,8 @@
     "express": "^4.21.2",
     "helmet": "^8.0.0",
     "reflect-metadata": "^0.2.2",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "@blazjs/metric": "^0.0.1-alpha.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

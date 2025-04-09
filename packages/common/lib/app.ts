@@ -1,3 +1,4 @@
+import { MetricClient } from "@blazjs/metric";
 import cors, { CorsOptions } from "cors";
 import express, {
   ErrorRequestHandler,
@@ -34,6 +35,9 @@ export interface AppOptions {
 
   /** Logger */
   logger?: Logger;
+
+  /** Metric */
+  metric?: MetricClient;
 }
 
 export class App {
@@ -42,6 +46,7 @@ export class App {
   private middlewares: RequestHandler[] = [];
   private _errorRequestHandler: ErrorRequestHandler = errorRequestHandler;
   private logger: Logger;
+  private metric: MetricClient;
 
   private options: AppOptions = {
     cors: {
@@ -59,7 +64,8 @@ export class App {
     if (options) {
       this.options = { ...this.options, ...options };
     }
-    this.logger = options?.logger ? options.logger : new DefaultLogger();
+    this.logger = options?.logger ?? new DefaultLogger();
+    this.metric = options?.metric ?? new MetricClient();
   }
 
   set(key: string, value: any) {
@@ -139,6 +145,13 @@ export class App {
     });
   }
 
+  private setupMetric() {
+    this.app.use("/metrics", async (_, res) => {
+      res.setHeader("Content-Type", this.metric.contentType());
+      res.send(await this.metric.metrics());
+    });
+  }
+
   /**
    * Starts the application by listening on the provided port.
    */
@@ -168,6 +181,7 @@ export class App {
 
       this.setupMiddlewares();
       this.setupRoutes();
+      this.setupMetric();
       this.setupProcessHandlers();
 
       // handle error request
