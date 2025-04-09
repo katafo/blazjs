@@ -7,8 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npx lerna run build",
-    "publish": "npx lerna publish --no-private --force-publish",
+    "lerna:build": "npx lerna run build",
+    "lerna:publish": "yarn lerna:build && npx lerna publish --no-private --force-publish",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
