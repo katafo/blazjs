@@ -7,8 +7,8 @@ export interface JwtAuthPayload {
   sub: string;
 }
 
-const UnauthorizedError = new ErrorResp(
-  "error.unauthorized",
+export const JwtUnauthorizedError = new ErrorResp(
+  "JwtError.Unauthorized",
   "Unauthorized",
   401
 );
@@ -64,23 +64,23 @@ export class JwtAuth<T extends JwtAuthPayload> {
   async verify(
     token: string,
     type: JwtAuthType = "access",
-    salt?: (payload: T) => string
+    salt?: (payload: T) => Promise<string | undefined>
   ) {
     const decoded = jwt.decode(token, {
       complete: true,
     });
     if (!decoded) {
-      throw UnauthorizedError;
+      throw JwtUnauthorizedError;
     }
 
     let jwtsecret =
       type === "access" ? this.config.secret : this.config.refreshSecret;
     if (!jwtsecret) {
-      throw UnauthorizedError;
+      throw JwtUnauthorizedError;
     }
 
     const payload = decoded.payload as T;
-    const extractedSalt = salt ? salt(payload) : undefined;
+    const extractedSalt = salt ? await salt(payload) : undefined;
     if (extractedSalt) {
       jwtsecret = `${jwtsecret}-${extractedSalt}`;
     }
@@ -88,14 +88,14 @@ export class JwtAuth<T extends JwtAuthPayload> {
     try {
       jwt.verify(token, jwtsecret);
     } catch {
-      throw UnauthorizedError;
+      throw JwtUnauthorizedError;
     }
 
     if (this.cache) {
       const cacheKey = this.getCacheKey(type, token, payload);
       const cached = await this.cache.exist(cacheKey);
       if (!cached) {
-        throw UnauthorizedError;
+        throw JwtUnauthorizedError;
       }
     }
 
@@ -115,7 +115,7 @@ export class JwtAuth<T extends JwtAuthPayload> {
       complete: true,
     });
     if (!decoded) {
-      throw UnauthorizedError;
+      throw JwtUnauthorizedError;
     }
     const payload = decoded.payload as JwtAuthPayload;
     const cacheKey = this.getCacheKey(type, token, payload);

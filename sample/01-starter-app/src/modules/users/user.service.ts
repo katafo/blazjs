@@ -13,10 +13,14 @@ export class UserService {
   async signIn(data: UserSignInDTO) {
     const { email, password } = data;
     if (email === "demo@blazjs.com" && password === "demo") {
-      const token = await this.auth.sign({
-        userId: "1",
-        sub: "1",
-      });
+      const token = await this.auth.sign(
+        {
+          userId: "1",
+          sub: "1",
+        },
+        "access",
+        "salt123"
+      );
       return token;
     }
     throw UserError.InvalidAccount;

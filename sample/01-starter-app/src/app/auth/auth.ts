@@ -1,9 +1,8 @@
-import { AppConfig } from "@app/index";
-import { JwtAuth, JwtAuthPayload } from "@blazjs/auth";
+import { AppConfig, logger } from "@app/index";
+import { JwtAuth, JwtAuthPayload, JwtUnauthorizedError } from "@blazjs/auth";
 import { DataRequestDTO } from "@blazjs/common";
 import { NextFunction, Request, Response } from "express";
 import { Service } from "typedi";
-import { AuthError } from "./auth.error";
 
 export class AuthPayload implements JwtAuthPayload {
   sub: string;
@@ -28,9 +27,12 @@ export class AppAuth extends JwtAuth<AuthPayload> {
     try {
       const token = req.headers.authorization?.split(" ")[1];
       if (!token) {
-        throw AuthError.Unauthorized;
+        throw JwtUnauthorizedError;
       }
-      const payload = await this.verify(token);
+      const payload = await this.verify(token, "access", async (decoded) => {
+        logger.debug("JWT decoded", decoded);
+        return "salt123";
+      });
       req["sub"] = payload.sub;
       req["userId"] = payload.userId;
 
