@@ -3,6 +3,7 @@ import Redis, { RedisOptions } from "ioredis";
 import { CacheProvider } from "./providers/cache.provider";
 import { HashCacheProvider } from "./providers/hash-cache.provider";
 import { JsonCacheProvider } from "./providers/json-cache.provider";
+import { ListCacheProvider } from "./providers/list-cache.provider";
 import { SetCacheProvider } from "./providers/set-cache.provider";
 import { SortedSetCacheProvider } from "./providers/sorted-set-cache.provider";
 
@@ -12,9 +13,10 @@ export class RedisCacheService
     HashCacheProvider,
     JsonCacheProvider,
     SetCacheProvider,
-    SortedSetCacheProvider
+    SortedSetCacheProvider,
+    ListCacheProvider
 {
-  private redisClient: Redis;
+  protected redisClient: Redis;
 
   constructor(options: RedisOptions) {
     this.redisClient = new Redis(options);
@@ -244,6 +246,40 @@ export class RedisCacheService
       pipeline.expire(key, ttl);
     }
     return await pipeline.exec();
+  }
+
+  async push(
+    key: string,
+    value: unknown,
+    type: "left" | "right" = "left"
+  ): Promise<void> {
+    type === "left"
+      ? await this.redisClient.lpush(key, JSON.stringify(value))
+      : await this.redisClient.rpush(key, JSON.stringify(value));
+  }
+
+  async range(key: string, limit?: number): Promise<unknown[]> {
+    const res = await this.redisClient.lrange(key, 0, limit ? limit - 1 : -1);
+    return res.map((item) => JSON.parse(item));
+  }
+
+  async pop(
+    key: string,
+    type: "left" | "right" = "left"
+  ): Promise<unknown | null> {
+    const res =
+      type === "left"
+        ? await this.redisClient.lpop(key)
+        : await this.redisClient.rpop(key);
+    return res ? JSON.parse(res) : null;
+  }
+
+  async length(key: string): Promise<number> {
+    return this.redisClient.llen(key);
+  }
+
+  async trim(key: string, start: number, end: number): Promise<void> {
+    await this.redisClient.ltrim(key, start, end);
   }
 }
 
