@@ -35,7 +35,7 @@ export class Config {
    * @returns object
    */
   decodeObj(str: string | undefined) {
-    if (!str) return new Error("Env validation error");
+    if (!str) throw new Error("Env validation error");
     return JSON.parse(str.replace(/\\/g, ""));
   }
 
