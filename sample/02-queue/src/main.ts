@@ -1,4 +1,5 @@
 import { App } from "@blazjs/common";
+import { BullQueueRoute } from "@blazjs/queue";
 import Container from "typedi";
 import { AppConfig } from "./app";
 import { DiscountOfferJobProcessor } from "./discount.processor";
@@ -9,7 +10,6 @@ async function bootstrap() {
   Container.get(AppConfig).validate();
 
   const app = new App();
-  await app.listen(3000);
 
   const discountProcessor = Container.get(DiscountOfferJobProcessor);
   discountProcessor.spawn();
@@ -27,6 +27,14 @@ async function bootstrap() {
   });
   cronMailProcessor.out([mailProcessor.queue]);
   cronMailProcessor.spawn();
+
+  const queueRoute = new BullQueueRoute(
+    [mailProcessor, cronMailProcessor, discountProcessor],
+    { users: { admin: "password" } }
+  );
+
+  app.registerRoutes({ routes: [queueRoute] });
+  await app.listen(3000);
 }
 
 bootstrap();
