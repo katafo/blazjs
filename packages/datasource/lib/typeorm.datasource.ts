@@ -34,7 +34,7 @@ export class TypeOrmDataSource {
   ): Promise<T> {
     const queryRunner = this.source.createQueryRunner("master");
     try {
-      return await queryRunner.connection.transaction(runInTransaction);
+      return await queryRunner.manager.transaction(runInTransaction);
     } finally {
       await queryRunner.release();
     }
