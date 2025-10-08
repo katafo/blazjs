@@ -16,7 +16,7 @@ export class RedisCacheService
     SortedSetCacheProvider,
     ListCacheProvider
 {
-  protected redisClient: Redis;
+  readonly redisClient: Redis;
 
   constructor(options: RedisOptions) {
     this.redisClient = new Redis(options);

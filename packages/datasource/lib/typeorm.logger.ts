@@ -10,9 +10,7 @@ export class TypeOrmLogger extends AbstractLogger {
     level: LogLevel,
     message: string | number | LogMessage | (string | number | LogMessage)[],
     queryRunner?: QueryRunner
-  ): void {
-    throw new Error("Method not implemented.");
-  }
+  ): void {}
 
   logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner): void {
     this.logger.debug(`[QUERY] ${this.generateQuery(query, parameters)}`);
