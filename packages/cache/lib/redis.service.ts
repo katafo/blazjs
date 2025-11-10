@@ -151,7 +151,7 @@ export class RedisCacheService
     const res = await this.redisClient.zrange(
       key,
       "+inf",
-      0,
+      "-inf",
       "BYSCORE",
       "REV",
       "LIMIT",
@@ -169,7 +169,7 @@ export class RedisCacheService
     return this.redisClient.zrange(
       key,
       "+inf",
-      0,
+      "-inf",
       "BYSCORE",
       "REV",
       "LIMIT",
