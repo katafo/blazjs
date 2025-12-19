@@ -35,6 +35,14 @@ export interface AppOptions {
 
   /** Logger */
   logger?: Logger;
+
+  /** Health check endpoint configuration.
+   * @default { enabled: true, path: "/health" }
+   */
+  healthCheck?: {
+    enabled: boolean;
+    path?: string;
+  };
 }
 
 export class App {
@@ -53,6 +61,10 @@ export class App {
       enabled: true,
     },
     trustProxy: true,
+    healthCheck: {
+      enabled: true,
+      path: "/health",
+    },
   };
 
   constructor(options?: AppOptions) {
@@ -145,6 +157,19 @@ export class App {
     }
   }
 
+  private setupHealthCheck() {
+    const healthConfig = this.options.healthCheck;
+    if (healthConfig?.enabled) {
+      const path = healthConfig.path || "/health";
+      this.app.get(path, (_req, res) => {
+        res.json({
+          status: "ok",
+          timestamp: new Date().toISOString(),
+        });
+      });
+    }
+  }
+
   private setupProcessHandlers() {
     process.on("uncaughtException", (err) => {
       this.logger.error("Uncaught Exception", err);
@@ -187,6 +212,7 @@ export class App {
         );
       }
 
+      this.setupHealthCheck();
       this.setupMiddlewares();
       this.setupRoutes();
       this.setupProcessHandlers();
