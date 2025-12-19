@@ -43,6 +43,12 @@ export interface AppOptions {
     enabled: boolean;
     path?: string;
   };
+
+  /** Request timeout in milliseconds.
+   * Set to 0 to disable timeout.
+   * @default 30000 (30 seconds)
+   */
+  requestTimeout?: number;
 }
 
 export class App {
@@ -65,6 +71,7 @@ export class App {
       enabled: true,
       path: "/health",
     },
+    requestTimeout: 30000,
   };
 
   constructor(options?: AppOptions) {
@@ -170,6 +177,30 @@ export class App {
     }
   }
 
+  private setupRequestTimeout() {
+    const timeout = this.options.requestTimeout;
+    if (timeout && timeout > 0) {
+      this.app.use((_req, res, next) => {
+        const timer = setTimeout(() => {
+          if (!res.headersSent) {
+            res.status(408).json({
+              error: {
+                code: "error.requestTimeout",
+                message: "Request timeout",
+              },
+            });
+          }
+        }, timeout);
+
+        // Clear timer when response completes
+        res.on("finish", () => clearTimeout(timer));
+        res.on("close", () => clearTimeout(timer));
+
+        next();
+      });
+    }
+  }
+
   private setupProcessHandlers() {
     process.on("uncaughtException", (err) => {
       this.logger.error("Uncaught Exception", err);
@@ -212,6 +243,7 @@ export class App {
         );
       }
 
+      this.setupRequestTimeout();
       this.setupHealthCheck();
       this.setupMiddlewares();
       this.setupRoutes();
