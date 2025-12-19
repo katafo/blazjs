@@ -1,7 +1,7 @@
 import { ClassConstructor, plainToInstance } from "class-transformer";
 import { ValidationError, validateOrReject } from "class-validator";
 import { Request } from "express";
-import { ErrorResp } from "../responses";
+import { ErrorResp, ValidationErrorDetail } from "../responses";
 import { BaseRequestDTO } from "./request.dto";
 
 /**
@@ -29,34 +29,46 @@ export const validateRequest = async <T extends BaseRequestDTO>(
   }
 };
 
+/**
+ * Extract all validation error details from ValidationError array.
+ */
+const extractAllErrors = (
+  errors: ValidationError[],
+  parentField = ""
+): ValidationErrorDetail[] => {
+  const details: ValidationErrorDetail[] = [];
+
+  for (const err of errors) {
+    const field = parentField ? `${parentField}.${err.property}` : err.property;
+
+    if (err.constraints) {
+      const messages = Object.values(err.constraints);
+      for (const message of messages) {
+        details.push({ field, message });
+      }
+    }
+
+    if (err.children && err.children.length > 0) {
+      details.push(...extractAllErrors(err.children, field));
+    }
+  }
+
+  return details;
+};
+
 const parseValidationError = (err: unknown) => {
   if (!Array.isArray(err)) {
     return err;
   }
 
   const validationErrs = err as ValidationError[];
-  if (validationErrs.length == 0) {
+  if (validationErrs.length === 0) {
     return err;
   }
 
-  const [firstErr] = validationErrs;
-  const { contexts, constraints, children } = firstErr;
+  const details = extractAllErrors(validationErrs);
+  const firstMessage =
+    details.length > 0 ? details[0].message : "Validation failed";
 
-  if (contexts && Object.values(contexts).length > 0) {
-    return new ErrorResp("error.badRequest", Object.values(contexts)[0], 400);
-  }
-
-  if (constraints && Object.values(constraints).length > 0) {
-    return new ErrorResp(
-      "error.badRequest",
-      Object.values(constraints)[0],
-      400
-    );
-  }
-
-  if (children && children.length > 0) {
-    return parseValidationError(children);
-  }
-
-  return new ErrorResp("error.badRequest", "Bad request", 400);
+  return new ErrorResp("error.badRequest", firstMessage, 400, details);
 };

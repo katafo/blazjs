@@ -122,6 +122,53 @@ describe("validateRequest", () => {
 
       await expect(validateRequest(TestDTO, req)).rejects.toBeInstanceOf(ErrorResp);
     });
+
+    it("should include details array with field and message", async () => {
+      const req = createMockRequest({}, {}, { name: "", age: 25 });
+
+      try {
+        await validateRequest(TestDTO, req);
+        fail("Should have thrown an error");
+      } catch (error) {
+        const errorResp = error as ErrorResp;
+        expect(errorResp.details).toBeDefined();
+        expect(Array.isArray(errorResp.details)).toBe(true);
+        expect(errorResp.details!.length).toBeGreaterThan(0);
+        expect(errorResp.details![0]).toHaveProperty("field");
+        expect(errorResp.details![0]).toHaveProperty("message");
+      }
+    });
+
+    it("should collect all validation errors in details", async () => {
+      const req = createMockRequest({}, {}, { name: "", age: -5 });
+
+      try {
+        await validateRequest(TestDTO, req);
+        fail("Should have thrown an error");
+      } catch (error) {
+        const errorResp = error as ErrorResp;
+        expect(errorResp.details).toBeDefined();
+        // Should have errors for both name (empty) and age (negative)
+        expect(errorResp.details!.length).toBeGreaterThanOrEqual(2);
+        const fields = errorResp.details!.map((d) => d.field);
+        expect(fields).toContain("name");
+        expect(fields).toContain("age");
+      }
+    });
+
+    it("should include nested field path in details", async () => {
+      const req = createMockRequest({}, {}, { item: { title: "" } });
+
+      try {
+        await validateRequest(TestNestedDTO, req);
+        fail("Should have thrown an error");
+      } catch (error) {
+        const errorResp = error as ErrorResp;
+        expect(errorResp.details).toBeDefined();
+        const nestedDetail = errorResp.details!.find((d) => d.field.includes("item.title"));
+        expect(nestedDetail).toBeDefined();
+      }
+    });
   });
 
   describe("DataRequestDTO default", () => {
