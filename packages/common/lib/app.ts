@@ -64,7 +64,12 @@ export class App {
     this.logger = options?.logger ? options.logger : new DefaultLogger();
   }
 
-  set(key: string, value: any) {
+  /**
+   * Sets a setting value for the Express application.
+   * @param key - The setting name
+   * @param value - The setting value
+   */
+  set(key: string, value: unknown): void {
     this.app.set(key, value);
   }
 
@@ -91,26 +96,40 @@ export class App {
   }
 
   /**
+   * Normalizes a path by joining segments and removing duplicate slashes.
+   */
+  private normalizePath(...segments: (string | undefined)[]): string {
+    return (
+      "/" +
+      segments
+        .filter((s): s is string => Boolean(s))
+        .join("/")
+        .replace(/\/+/g, "/")
+        .replace(/^\/|\/$/g, "")
+    );
+  }
+
+  /**
    * Sets up the application routes by iterating over the provided routes and groups,
    * and initializing them with their respective paths and routers.
    */
   private setupRoutes() {
     this.routes.forEach((route) => {
-      let path = "/";
-      if (route.version) {
-        path += route.version + "/";
-      }
       // init group routes
       route.groups?.forEach((group) => {
         group.routes.forEach((clsRoute) => {
-          const routePath = path + group.group + "/" + (clsRoute.route ?? "");
+          const routePath = this.normalizePath(
+            route.version,
+            group.group,
+            clsRoute.route
+          );
           this.app.use(routePath, clsRoute.router);
         });
       });
 
       // init routes
       route.routes?.forEach((clsRoute) => {
-        const routePath = path + (clsRoute.route ?? "");
+        const routePath = this.normalizePath(route.version, clsRoute.route);
         this.app.use(routePath, clsRoute.router);
       });
     });
