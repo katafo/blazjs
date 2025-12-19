@@ -14,6 +14,11 @@ export interface LoggerOptions {
    * @default []
    */
   sanitizeKeys?: string[];
+
+  /** Include caller info (file:line) in log messages
+   * @default false
+   */
+  includeCallerInfo?: boolean;
 }
 
 export interface ILogger {

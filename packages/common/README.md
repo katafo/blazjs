@@ -322,6 +322,24 @@ logger.info("User login", {
 
 Default sanitized keys include: `password`, `token`, `apiKey`, `authorization`, `cookie`, `cvv`, `privateKey`, `secretKey`, etc.
 
+#### Caller Info
+
+Include file name and line number in log messages for easier debugging:
+
+```typescript
+const logger = new DefaultLogger({
+  includeCallerInfo: true,
+});
+
+logger.info("User logged in");
+// Output: [user.service.ts:42] User logged in
+
+logger.error("Database error");
+// Output: [db.repository.ts:156] Database error
+```
+
+> **Note:** Not recommended for production due to performance overhead (stack trace parsing) and security concerns (exposes file structure).
+
 #### Custom Logger
 
 Extend the `Logger` class to create your own:
