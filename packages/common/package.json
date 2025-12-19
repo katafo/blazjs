@@ -14,7 +14,9 @@
   },
   "scripts": {
     "build": "rimraf ./dist && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "files": [
     "dist",
@@ -34,7 +36,10 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
-    "@types/node": "^22.13.8"
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.8",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5"
   },
   "gitHead": "6fb726f7868407c29856e70d7ec04532f3a899d2"
 }

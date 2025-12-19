@@ -61,7 +61,7 @@ export class DefaultLogger extends Logger {
     // add file transport
     const fileOpts = this.options.fileTransport;
     if (fileOpts?.enabled) {
-      // alway add file trransport for 'error' logs
+      // always add file trransport for 'error' logs
       this.logger.add(
         new winston.transports.File({
           filename: "logs/error.log",
