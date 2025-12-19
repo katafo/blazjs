@@ -6,6 +6,7 @@ import express, {
   urlencoded,
 } from "express";
 import helmet, { HelmetOptions } from "helmet";
+import http from "http";
 import { DefaultLogger, Logger } from "./loggers";
 import { errorRequestHandler } from "./responses";
 import { AppRoute } from "./routes/app.route";
@@ -39,6 +40,7 @@ export interface AppOptions {
 export class App {
   private routes: AppRoute[] = [];
   private app: express.Express;
+  private server?: http.Server;
   private middlewares: RequestHandler[] = [];
   private _errorRequestHandler: ErrorRequestHandler = errorRequestHandler;
   private logger: Logger;
@@ -175,7 +177,7 @@ export class App {
       this.app.use(this._errorRequestHandler);
 
       await new Promise<void>((resolve, reject) => {
-        this.app
+        this.server = this.app
           .listen(port, () => {
             this.logger.info(`Server is listening at port ${port}`);
             resolve();
@@ -188,5 +190,19 @@ export class App {
       this.logger.error("Error starting server", error);
       process.exit(1);
     }
+  }
+
+  /**
+   * Gracefully shutdown the server.
+   */
+  async close(): Promise<void> {
+    if (!this.server) return;
+
+    return new Promise((resolve, reject) => {
+      this.server!.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
   }
 }

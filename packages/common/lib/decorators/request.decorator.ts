@@ -10,7 +10,7 @@ import { ResponseWrapper } from "../responses";
  */
 export function Request<T extends DataRequestDTO>(cls?: ClassConstructor<T>) {
   return function (
-    target: any,
+    target: object,
     propertyKey: string,
     descriptor: PropertyDescriptor
   ) {
