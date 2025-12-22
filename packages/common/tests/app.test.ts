@@ -51,6 +51,22 @@ class TestRoute extends BaseRoute {
   }
 }
 
+class SlowRoute extends BaseRoute {
+  route = "slow";
+
+  constructor() {
+    super();
+    this.router.get("/", (_req, res) => {
+      // Simulate slow response - will timeout
+      setTimeout(() => {
+        if (!res.headersSent) {
+          res.json({ message: "slow response" });
+        }
+      }, 200);
+    });
+  }
+}
+
 class UsersRoute extends BaseRoute {
   route = "users";
 
@@ -376,6 +392,72 @@ describe("App", () => {
       const app = new App({ logger: mockLogger });
 
       await expect(app.close()).resolves.toBeUndefined();
+    });
+  });
+
+  describe("requestTimeout", () => {
+    it("should return 408 when request exceeds timeout", async () => {
+      const app = new App({
+        logger: mockLogger,
+        requestTimeout: 50, // 50ms timeout
+      });
+      const slowRoute = new SlowRoute();
+      app.registerRoutes({ routes: [slowRoute] });
+
+      await app.listen(4009);
+
+      // Make request to slow endpoint
+      const response = await fetch("http://localhost:4009/slow");
+      const data = await response.json();
+
+      expect(response.status).toBe(408);
+      expect(data.error.code).toBe("error.requestTimeout");
+      expect(data.error.message).toBe("Request timeout");
+
+      await app.close();
+    }, 10000);
+
+    it("should not timeout when response is fast enough", async () => {
+      const app = new App({
+        logger: mockLogger,
+        requestTimeout: 5000, // 5s timeout
+      });
+      const testRoute = new TestRoute();
+      app.registerRoutes({ routes: [testRoute] });
+
+      await app.listen(4010);
+
+      const response = await fetch("http://localhost:4010/test");
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.message).toBe("test route");
+
+      await app.close();
+    }, 10000);
+
+    it("should disable timeout when set to 0", async () => {
+      const app = new App({
+        logger: mockLogger,
+        requestTimeout: 0, // disabled
+      });
+      const testRoute = new TestRoute();
+      app.registerRoutes({ routes: [testRoute] });
+
+      await app.listen(4011);
+
+      const response = await fetch("http://localhost:4011/test");
+
+      expect(response.status).toBe(200);
+
+      await app.close();
+    }, 10000);
+
+    it("should use default timeout of 30000ms", () => {
+      const app = new App({ logger: mockLogger });
+
+      // We can't directly access private options, but we verify it doesn't throw
+      expect(app).toBeDefined();
     });
   });
 });

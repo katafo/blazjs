@@ -7,6 +7,34 @@ export abstract class Logger {
   protected options: LoggerOptions;
 
   /**
+   * Extract caller information (file, line, function) from stack trace.
+   * @param stackLevel - How many levels up the stack to look (default: 3)
+   */
+  private getCallerInfo(stackLevel = 3): { file: string; line: string; func: string } | null {
+    const stack = new Error().stack;
+    if (!stack) return null;
+
+    const lines = stack.split("\n");
+    // Skip "Error" line and specified stack levels
+    const callerLine = lines[stackLevel];
+    if (!callerLine) return null;
+
+    // Parse stack trace line: "at functionName (/path/to/file.ts:10:5)"
+    // or "at /path/to/file.ts:10:5"
+    const match = callerLine.match(/at\s+(?:(.+?)\s+)?\(?(.+):(\d+):\d+\)?/);
+    if (!match) return null;
+
+    const func = match[1] || "anonymous";
+    const fullPath = match[2];
+    const line = match[3];
+
+    // Extract just filename from full path
+    const file = fullPath.split("/").pop() || fullPath;
+
+    return { file, line, func };
+  }
+
+  /**
    * Mask the keys in the data object.
    * @param data - The data object to be masked.
    */
@@ -88,23 +116,32 @@ export abstract class Logger {
     next(err);
   }
 
+  private formatMessage(message: string): string {
+    if (!this.options.includeCallerInfo) {
+      return message;
+    }
+    const caller = this.getCallerInfo();
+    const prefix = caller ? `[${caller.file}:${caller.line}]` : "";
+    return `${prefix} ${message}`;
+  }
+
   log(level: string, message: string, ...meta: any[]) {
-    this.logger.log(level, message, ...meta);
+    this.logger.log(level, this.formatMessage(message), ...meta);
   }
 
   debug(message: string, ...meta: any[]) {
-    this.logger.debug(message, ...meta);
+    this.logger.debug(this.formatMessage(message), ...meta);
   }
 
   info(message: string, ...meta: any[]) {
-    this.logger.info(message, ...meta);
+    this.logger.info(this.formatMessage(message), ...meta);
   }
 
   warn(message: string, ...meta: any[]) {
-    this.logger.warn(message, ...meta);
+    this.logger.warn(this.formatMessage(message), ...meta);
   }
 
   error(message: string, ...meta: any[]) {
-    this.logger.error(message, ...meta);
+    this.logger.error(this.formatMessage(message), ...meta);
   }
 }

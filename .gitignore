@@ -18,6 +18,9 @@ node_modules/
 packages/**/*.d.ts
 packages/**/*.js
 
+# coverage
+coverage/
+
 # misc
 .DS_Store
 /packages/**/.npmignore

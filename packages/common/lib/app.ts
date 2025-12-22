@@ -35,6 +35,20 @@ export interface AppOptions {
 
   /** Logger */
   logger?: Logger;
+
+  /** Health check endpoint configuration.
+   * @default { enabled: true, path: "/health" }
+   */
+  healthCheck?: {
+    enabled: boolean;
+    path?: string;
+  };
+
+  /** Request timeout in milliseconds.
+   * Set to 0 to disable timeout.
+   * @default 30000 (30 seconds)
+   */
+  requestTimeout?: number;
 }
 
 export class App {
@@ -53,6 +67,11 @@ export class App {
       enabled: true,
     },
     trustProxy: true,
+    healthCheck: {
+      enabled: true,
+      path: "/health",
+    },
+    requestTimeout: 30000,
   };
 
   constructor(options?: AppOptions) {
@@ -64,7 +83,12 @@ export class App {
     this.logger = options?.logger ? options.logger : new DefaultLogger();
   }
 
-  set(key: string, value: any) {
+  /**
+   * Sets a setting value for the Express application.
+   * @param key - The setting name
+   * @param value - The setting value
+   */
+  set(key: string, value: unknown): void {
     this.app.set(key, value);
   }
 
@@ -91,26 +115,40 @@ export class App {
   }
 
   /**
+   * Normalizes a path by joining segments and removing duplicate slashes.
+   */
+  private normalizePath(...segments: (string | undefined)[]): string {
+    return (
+      "/" +
+      segments
+        .filter((s): s is string => Boolean(s))
+        .join("/")
+        .replace(/\/+/g, "/")
+        .replace(/^\/|\/$/g, "")
+    );
+  }
+
+  /**
    * Sets up the application routes by iterating over the provided routes and groups,
    * and initializing them with their respective paths and routers.
    */
   private setupRoutes() {
     this.routes.forEach((route) => {
-      let path = "/";
-      if (route.version) {
-        path += route.version + "/";
-      }
       // init group routes
       route.groups?.forEach((group) => {
         group.routes.forEach((clsRoute) => {
-          const routePath = path + group.group + "/" + (clsRoute.route ?? "");
+          const routePath = this.normalizePath(
+            route.version,
+            group.group,
+            clsRoute.route
+          );
           this.app.use(routePath, clsRoute.router);
         });
       });
 
       // init routes
       route.routes?.forEach((clsRoute) => {
-        const routePath = path + (clsRoute.route ?? "");
+        const routePath = this.normalizePath(route.version, clsRoute.route);
         this.app.use(routePath, clsRoute.router);
       });
     });
@@ -123,6 +161,43 @@ export class App {
   registerErrorHandler(handler: ErrorRequestHandler) {
     if (handler) {
       this._errorRequestHandler = handler;
+    }
+  }
+
+  private setupHealthCheck() {
+    const healthConfig = this.options.healthCheck;
+    if (healthConfig?.enabled) {
+      const path = healthConfig.path || "/health";
+      this.app.get(path, (_req, res) => {
+        res.json({
+          status: "ok",
+          timestamp: new Date().toISOString(),
+        });
+      });
+    }
+  }
+
+  private setupRequestTimeout() {
+    const timeout = this.options.requestTimeout;
+    if (timeout && timeout > 0) {
+      this.app.use((_req, res, next) => {
+        const timer = setTimeout(() => {
+          if (!res.headersSent) {
+            res.status(408).json({
+              error: {
+                code: "error.requestTimeout",
+                message: "Request timeout",
+              },
+            });
+          }
+        }, timeout);
+
+        // Clear timer when response completes
+        res.on("finish", () => clearTimeout(timer));
+        res.on("close", () => clearTimeout(timer));
+
+        next();
+      });
     }
   }
 
@@ -168,6 +243,8 @@ export class App {
         );
       }
 
+      this.setupRequestTimeout();
+      this.setupHealthCheck();
       this.setupMiddlewares();
       this.setupRoutes();
       this.setupProcessHandlers();

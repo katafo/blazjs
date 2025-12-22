@@ -399,4 +399,28 @@ describe("Logger", () => {
       expect(logger.calls[0].message).toBe("Error message");
     });
   });
+
+  describe("includeCallerInfo", () => {
+    it("should not include caller info by default", () => {
+      logger.info("Test message");
+
+      expect(logger.calls[0].message).toBe("Test message");
+      expect(logger.calls[0].message).not.toMatch(/\[.*:\d+\]/);
+    });
+
+    it("should include caller info when enabled", () => {
+      const loggerWithCaller = new TestLogger({ includeCallerInfo: true });
+      loggerWithCaller.info("Test message");
+
+      expect(loggerWithCaller.calls[0].message).toMatch(/\[.*:\d+\] Test message/);
+    });
+
+    it("should include file name and line number", () => {
+      const loggerWithCaller = new TestLogger({ includeCallerInfo: true });
+      loggerWithCaller.info("Test message");
+
+      // Should contain pattern like [logger.test.ts:123]
+      expect(loggerWithCaller.calls[0].message).toMatch(/\[\w+\.\w+:\d+\]/);
+    });
+  });
 });
