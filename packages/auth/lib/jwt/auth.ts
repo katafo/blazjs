@@ -1,4 +1,4 @@
-import { CacheProvider } from "@blazjs/cache/dist/providers/cache.provider";
+import { CacheProvider } from "@blazjs/cache";
 import { ErrorResp } from "@blazjs/common";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { JwtConfig } from "./config";
@@ -24,7 +24,7 @@ export class JwtAuth<T extends JwtAuthPayload> {
    * @param type Access or refresh
    * @param salt Salt for secret, add more security to token.
    */
-  async sign(payload: T, type: JwtAuthType = "access", salt?: string) {
+  async sign(payload: T, type: JwtAuthType = "access", salt?: string): Promise<string> {
     const {
       secret,
       expiresIn,
@@ -34,10 +34,12 @@ export class JwtAuth<T extends JwtAuthPayload> {
       audience,
     } = this.config;
 
-    let jwtSecret = (type === "access" ? secret : refreshSecret) ?? "";
-    if (salt) {
-      jwtSecret = `${jwtSecret}-${salt}`;
+    const jwtSecret = type === "access" ? secret : refreshSecret;
+    if (!jwtSecret) {
+      throw new Error(`JWT ${type} secret is not configured`);
     }
+
+    const finalSecret = salt ? `${jwtSecret}-${salt}` : jwtSecret;
 
     let jwtExpires = type === "access" ? expiresIn : refreshExpiresIn;
 
@@ -47,10 +49,14 @@ export class JwtAuth<T extends JwtAuthPayload> {
     if (issuer) signOptions.issuer = issuer;
     if (audience) signOptions.audience = audience;
 
-    const signed = jwt.sign(payload, jwtSecret, signOptions);
+    const signed = jwt.sign(payload, finalSecret, signOptions);
 
     if (this.cache) {
-      this.cache.set(this.getCacheKey(type, signed, payload), "", jwtExpires);
+      await this.cache.set(
+        this.getCacheKey(type, signed, payload),
+        "",
+        jwtExpires
+      );
     }
 
     return signed;
@@ -65,7 +71,7 @@ export class JwtAuth<T extends JwtAuthPayload> {
     token: string,
     type: JwtAuthType = "access",
     salt?: (payload: T) => Promise<string | undefined>
-  ) {
+  ): Promise<T> {
     const decoded = jwt.decode(token, {
       complete: true,
     });
@@ -86,7 +92,11 @@ export class JwtAuth<T extends JwtAuthPayload> {
     }
 
     try {
-      jwt.verify(token, jwtsecret);
+      const verifyOptions: jwt.VerifyOptions = {};
+      if (this.config.issuer) verifyOptions.issuer = this.config.issuer;
+      if (this.config.audience) verifyOptions.audience = this.config.audience;
+
+      jwt.verify(token, jwtsecret, verifyOptions);
     } catch {
       throw JwtUnauthorizedError;
     }
@@ -107,7 +117,7 @@ export class JwtAuth<T extends JwtAuthPayload> {
    * Only work when cache is enabled
    * @param token JWT token
    */
-  async revoke(token: string, type: JwtAuthType = "access") {
+  async revoke(token: string, type: JwtAuthType = "access"): Promise<void> {
     if (!this.cache) {
       throw new Error("Jwt cache is not enabled");
     }
@@ -126,7 +136,7 @@ export class JwtAuth<T extends JwtAuthPayload> {
     type: JwtAuthType,
     token: string,
     payload: JwtAuthPayload
-  ) {
+  ): string {
     return `${type}-tokens:${payload.sub}:${token}`;
   }
 }
