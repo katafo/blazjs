@@ -14,7 +14,9 @@
   },
   "scripts": {
     "build": "rimraf ./dist && tsc",
-    "test": "node ./__tests__/cache.test.js"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "files": [
     "dist",

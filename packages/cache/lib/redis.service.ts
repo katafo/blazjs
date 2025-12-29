@@ -22,6 +22,10 @@ export class RedisCacheService
     this.redisClient = new Redis(options);
   }
 
+  async disconnect(): Promise<void> {
+    await this.redisClient.quit();
+  }
+
   async get(key: string): Promise<string | null> {
     return this.redisClient.get(key);
   }
@@ -38,23 +42,23 @@ export class RedisCacheService
     return this.redisClient.del(key);
   }
 
-  async exist(key: string) {
+  async exist(key: string): Promise<number> {
     return this.redisClient.exists(key);
   }
 
-  async hget(key: string, field: string) {
+  async hget(key: string, field: string): Promise<string | null> {
     return this.redisClient.hget(key, field);
   }
 
-  async hset(key: string, field: string, value: string) {
+  async hset(key: string, field: string, value: string): Promise<void> {
     await this.redisClient.hset(key, field, value);
   }
 
-  async hgetall(key: string) {
+  async hgetall(key: string): Promise<Record<string, string>> {
     return this.redisClient.hgetall(key);
   }
 
-  async hexists(key: string, field: string) {
+  async hexists(key: string, field: string): Promise<number> {
     return this.redisClient.hexists(key, field);
   }
 
@@ -62,7 +66,12 @@ export class RedisCacheService
     return this.redisClient.hdel(key, ...fields);
   }
 
-  async jsonset(key: string, object: unknown, path?: string, ttl?: number) {
+  async jsonset(
+    key: string,
+    object: unknown,
+    path?: string,
+    ttl?: number
+  ): Promise<[error: Error | null, result: unknown][] | null> {
     path = path ? `$.${path}` : "$";
     const pipeline = this.redisClient
       .pipeline()
@@ -76,8 +85,8 @@ export class RedisCacheService
   async jsonmset(
     data: { key: string; object: unknown; path?: string }[],
     ttl?: number
-  ) {
-    if (!data.length) return;
+  ): Promise<[error: Error | null, result: unknown][] | null> {
+    if (!data.length) return null;
 
     const pipeline = this.redisClient.pipeline();
     const args = data.flatMap(({ key, object, path }) => [
@@ -91,40 +100,51 @@ export class RedisCacheService
       data.forEach(({ key }) => pipeline.expire(key, ttl));
     }
 
-    await pipeline.exec();
+    return await pipeline.exec();
   }
 
-  async jsonget(key: string, path?: string) {
+  async jsonget<T>(key: string, path?: string): Promise<T[] | undefined> {
     path = path ? `$.${path}` : "$";
     const res = await this.redisClient.call("JSON.GET", key, path);
 
     if (typeof res !== "string") return;
-    return JSON.parse(res);
+    try {
+      return JSON.parse(res);
+    } catch {
+      return undefined;
+    }
   }
 
-  async jsonmget(keys: string[], path?: string) {
-    keys.push(path ? `$.${path}` : "$");
-    const results = await this.redisClient.call("JSON.MGET", keys);
+  async jsonmget<T>(keys: string[], path?: string): Promise<T[]> {
+    const args = [...keys, path ? `$.${path}` : "$"];
+    const results = await this.redisClient.call("JSON.MGET", args);
 
     if (!Array.isArray(results)) return [];
 
-    const parseds = results
-      .map((res) => {
-        return <[]>JSON.parse(res);
-      })
-      .flat();
+    const parseds: T[] = [];
+    for (const res of results) {
+      if (typeof res !== "string") continue;
+      try {
+        const parsed = JSON.parse(res);
+        if (Array.isArray(parsed)) {
+          parseds.push(...parsed);
+        }
+      } catch {
+        // Skip invalid JSON
+      }
+    }
 
     return parseds;
   }
 
-  async zadd(key: string, member: string, score: number) {
+  async zadd(key: string, member: string, score: number): Promise<number> {
     return this.redisClient.zadd(key, score, member);
   }
 
   async zmadd(
     data: { key: string; member: string; score: number }[],
     ttl?: number
-  ) {
+  ): Promise<[error: Error | null, result: unknown][] | null> {
     const pipeline = this.redisClient.pipeline();
     for (const { key, member, score } of data) {
       pipeline.zadd(key, score, member);
@@ -135,11 +155,14 @@ export class RedisCacheService
     return await pipeline.exec();
   }
 
-  async zrem(key: string, member: string) {
+  async zrem(key: string, member: string): Promise<number> {
     return this.redisClient.zrem(key, member);
   }
 
-  async zrems(key: string, members: string[]) {
+  async zrems(
+    key: string,
+    members: string[]
+  ): Promise<[error: Error | null, result: unknown][] | null> {
     const pipeline = this.redisClient.pipeline();
     for (const member of members) {
       pipeline.zrem(key, member);
@@ -147,7 +170,10 @@ export class RedisCacheService
     return await pipeline.exec();
   }
 
-  async zrevrange(key: string, pagination: Pagination) {
+  async zrevrange(
+    key: string,
+    pagination: Pagination
+  ): Promise<{ member: string; score: string }[]> {
     const res = await this.redisClient.zrange(
       key,
       "+inf",
@@ -165,7 +191,10 @@ export class RedisCacheService
     }));
   }
 
-  async zrevrangebyscore(key: string, pagination: Pagination) {
+  async zrevrangebyscore(
+    key: string,
+    pagination: Pagination
+  ): Promise<string[]> {
     return this.redisClient.zrange(
       key,
       "+inf",
@@ -178,19 +207,19 @@ export class RedisCacheService
     );
   }
 
-  async zrank(key: string, member: string) {
+  async zrank(key: string, member: string): Promise<number | null> {
     return this.redisClient.zrank(key, member);
   }
 
-  async zrevrank(key: string, member: string) {
+  async zrevrank(key: string, member: string): Promise<number | null> {
     return this.redisClient.zrevrank(key, member);
   }
 
-  async zscore(key: string, member: string) {
+  async zscore(key: string, member: string): Promise<string | null> {
     return this.redisClient.zscore(key, member);
   }
 
-  async zcard(key: string) {
+  async zcard(key: string): Promise<number> {
     return this.redisClient.zcard(key);
   }
 
@@ -198,15 +227,24 @@ export class RedisCacheService
     key: string,
     min: number | string = "-inf",
     max: number | string = "+inf"
-  ) {
+  ): Promise<number> {
     return this.redisClient.zcount(key, min, max);
   }
 
-  async zremrangebyrank(key: string, start: number, stop: number) {
+  async zremrangebyrank(
+    key: string,
+    start: number,
+    stop: number
+  ): Promise<number> {
     return this.redisClient.zremrangebyrank(key, start, stop);
   }
 
-  async zscan(key: string, match: string, cursor = 0, count?: number) {
+  async zscan(
+    key: string,
+    match: string,
+    cursor = 0,
+    count?: number
+  ): Promise<[cursor: string, elements: string[]]> {
     if (count) {
       return this.redisClient.zscan(
         key,
@@ -220,15 +258,18 @@ export class RedisCacheService
     return this.redisClient.zscan(key, cursor, "MATCH", match);
   }
 
-  async sadd(key: string, member: string) {
+  async sadd(key: string, member: string): Promise<number> {
     return this.redisClient.sadd(key, member);
   }
 
-  async sismember(key: string, member: string) {
+  async sismember(key: string, member: string): Promise<boolean> {
     return (await this.redisClient.sismember(key, member)) === 1;
   }
 
-  async sismembers(key: string, members: string[]) {
+  async sismembers(
+    key: string,
+    members: string[]
+  ): Promise<[error: Error | null, result: unknown][] | null> {
     const pipeline = this.redisClient.pipeline();
     for (const member of members) {
       pipeline.sismember(key, member);
@@ -236,11 +277,13 @@ export class RedisCacheService
     return await pipeline.exec();
   }
 
-  async srem(key: string, member: string) {
+  async srem(key: string, member: string): Promise<number> {
     return this.redisClient.srem(key, member);
   }
 
-  async mexpire(data: { key: string; ttl: number }[]) {
+  async mexpire(
+    data: { key: string; ttl: number }[]
+  ): Promise<[error: Error | null, result: unknown][] | null> {
     const pipeline = this.redisClient.pipeline();
     for (const { key, ttl } of data) {
       pipeline.expire(key, ttl);
@@ -260,7 +303,13 @@ export class RedisCacheService
 
   async range(key: string, limit?: number): Promise<unknown[]> {
     const res = await this.redisClient.lrange(key, 0, limit ? limit - 1 : -1);
-    return res.map((item) => JSON.parse(item));
+    return res.map((item) => {
+      try {
+        return JSON.parse(item);
+      } catch {
+        return item;
+      }
+    });
   }
 
   async pop(
@@ -271,7 +320,12 @@ export class RedisCacheService
       type === "left"
         ? await this.redisClient.lpop(key)
         : await this.redisClient.rpop(key);
-    return res ? JSON.parse(res) : null;
+    if (!res) return null;
+    try {
+      return JSON.parse(res);
+    } catch {
+      return res;
+    }
   }
 
   async length(key: string): Promise<number> {
