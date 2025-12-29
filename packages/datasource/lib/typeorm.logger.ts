@@ -27,7 +27,19 @@ export class TypeOrmLogger extends AbstractLogger {
     );
   }
 
-  private generateQuery(query: string, parameters: any[] | undefined) {
+  logQueryError(
+    error: string | Error,
+    query: string,
+    parameters?: any[],
+    queryRunner?: QueryRunner
+  ): void {
+    const errorMessage = error instanceof Error ? error.message : error;
+    this.logger.error(
+      `[QUERY ERROR] ${errorMessage} - ${this.generateQuery(query, parameters)}`
+    );
+  }
+
+  private generateQuery(query: string, parameters: any[] | undefined): string {
     if (!parameters) return query.replace(/[\s\n]+/g, " ");
     parameters.forEach((param) => {
       query = query.replace("?", `${this.stringifyParams(param)}`);

@@ -21,7 +21,7 @@ export class TypeOrmDataSource {
     this.source.logger = new TypeOrmLogger(logger);
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     await this.source.initialize();
   }
 
@@ -49,18 +49,15 @@ export class TypeOrmDataSource {
   async query<T>(
     mode: DataSourceMode | undefined,
     handler: (manager: InferEntityManager) => Promise<T>
-  ) {
-    if (!mode || mode === "slave") {
-      return await handler(this.source.manager);
-    }
+  ): Promise<T> {
+    // If mode is EntityManager, use it directly
     if (mode instanceof EntityManager) {
       return await handler(mode);
     }
-    // create a connection to MASTER database
-    const queryRunner = this.source.createQueryRunner(mode);
+    // Create query runner for both slave and master modes
+    const queryRunner = this.source.createQueryRunner(mode || "slave");
     try {
-      const { manager } = queryRunner;
-      return await handler(manager);
+      return await handler(queryRunner.manager);
     } finally {
       await queryRunner.release();
     }
@@ -72,33 +69,34 @@ export class TypeOrmDataSource {
   async runMigration(options?: {
     transaction?: "all" | "none" | "each";
     fake?: boolean;
-  }) {
+  }): Promise<void> {
     await this.source.runMigrations(options);
   }
 
   /**
    * Close the connection to the database.
    */
-  async close() {
+  async close(): Promise<void> {
     await this.source.destroy();
   }
 
   /** Check if database connection is alive */
-  async isConnected() {
+  async isConnected(): Promise<boolean> {
     try {
       if (!this.source.isInitialized) return false;
       await this.source.query("SELECT 1");
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
 
-  /** Reconnect to database if connection is lost.  
+  /** Reconnect to database if connection is lost.
    @param ms: milliseconds to wait before checking connection again
+   @returns interval ID that can be used to stop reconnection
   */
-  async reconnect(ms: number) {
-    setInterval(async () => {
+  reconnect(ms: number): NodeJS.Timeout {
+    return setInterval(async () => {
       const isConnected = await this.isConnected();
       if (!isConnected) {
         if (this.isReconnecting) return;
@@ -108,11 +106,11 @@ export class TypeOrmDataSource {
             await this.source.destroy();
             this.logger?.info("Database connection closed");
           }
-          this.logger?.info("🔁 Reconnecting to database...");
+          this.logger?.info("Reconnecting to database...");
           await this.source.initialize();
-          this.logger?.info("✅ Database reconnected.");
+          this.logger?.info("Database reconnected");
         } catch (e) {
-          this.logger?.error("❌ Failed to reconnect to database", e);
+          this.logger?.error("Failed to reconnect to database", e);
         } finally {
           this.isReconnecting = false;
         }
