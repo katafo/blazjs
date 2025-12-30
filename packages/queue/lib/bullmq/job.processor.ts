@@ -31,18 +31,20 @@ export abstract class JobProcessor<JobData = unknown> {
   protected readonly logger: Logger | undefined;
   protected readonly workerOptions: Omit<WorkerOptions, "connection"> = {};
   private workers: Record<string, Worker> = {};
+  private queueConnection: Redis;
 
   constructor(private options: JobProcessorOptions) {
     const { connection, queue, logger } = options;
     this.logger = logger;
 
+    this.queueConnection = new Redis(connection);
     this.queue = new Queue(queue.name, {
       ...queue.options,
       defaultJobOptions: queue.options?.defaultJobOptions || {
         removeOnComplete: 100,
         removeOnFail: 100,
       },
-      connection: new Redis(connection),
+      connection: this.queueConnection,
     });
 
     if (options.worker) {
@@ -50,19 +52,19 @@ export abstract class JobProcessor<JobData = unknown> {
     }
   }
 
-  on(queue?: Queue) {
+  on(queue?: Queue): this {
     if (queue) this.queue = queue;
     return this;
   }
 
-  out(queues: Queue[]) {
+  out(queues: Queue[]): this {
     this.outputQueues = queues;
     return this;
   }
 
   protected abstract process(job: Job<JobData>): Promise<BulkJob[] | void>;
 
-  protected async dispatchJobsToOutputQueues(jobs: BulkJob[]) {
+  protected async dispatchJobsToOutputQueues(jobs: BulkJob[]): Promise<void> {
     if (!jobs.length || !this.outputQueues.length) return;
     await Promise.allSettled(
       this.outputQueues.map((queue) => queue.addBulk(jobs))
@@ -81,7 +83,7 @@ export abstract class JobProcessor<JobData = unknown> {
     }
   }
 
-  spawn(instance: number = 1) {
+  spawn(instance: number = 1): void {
     if (!this.queue) throw new Error("Process queue not found");
     for (let i = 0; i < instance; i++) {
       const worker = new Worker(
@@ -103,5 +105,6 @@ export abstract class JobProcessor<JobData = unknown> {
     await Promise.allSettled(
       Object.values(this.workers).map((worker) => worker.close())
     );
+    await this.queue.close();
   }
 }
